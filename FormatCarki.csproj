@@ -3,6 +3,7 @@
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
+		<ApplicationIcon>Assets\icon.ico</ApplicationIcon>
 		<Version>1.0.2</Version>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -16,7 +17,7 @@
 	<ItemGroup>
 		<!-- Gömülü yazı tipi: Fonts klasörüne Inter-Regular.ttf ve Inter-SemiBold.ttf konur -->
 		<EmbeddedResource Include="Fonts\*.ttf" LogicalName="%(Filename)%(Extension)" />
-		<!-- Logo: Assets\logo.png (kare PNG, 160x160 önerilir). Dosya yoksa derleme hata vermez, "R" simgesi çizilir. -->
+		<ApplicationIcon>Assets\icon.ico</ApplicationIcon>
 		<EmbeddedResource Include="Assets\logo.png" LogicalName="logo.png" Condition="Exists('Assets\logo.png')" />
 	</ItemGroup>
 	<ItemGroup>
