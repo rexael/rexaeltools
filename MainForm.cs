@@ -958,7 +958,7 @@ class MainForm : Form
             DrawText(g, "R", fTitle, Txt, logoRect,
                 StringAlignment.Center, StringAlignment.Center);
         }
-        DrawText(g, "Rexael Tools", fTitle, Txt,
+        DrawText(g, "Rexael sadsadTools", fTitle, Txt,
             new Rectangle(145, 13, 300, 24));
         DrawText(g, "Your tools. One workspace.", fSmall, Sub,
             new Rectangle(146, 37, 320, 17));
