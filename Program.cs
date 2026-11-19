@@ -71,6 +71,22 @@ static class Autostart
     }
 }
 
+// Uygulama simgesi: gömülü app.ico (Assets\icon.ico); yoksa Windows'un genel simgesi.
+static class AppIcon
+{
+    public static Icon Get(bool small)
+    {
+        try
+        {
+            using var s = typeof(AppIcon).Assembly.GetManifestResourceStream("app.ico");
+            if (s != null) return small ? new Icon(s, SystemInformation.SmallIconSize) : new Icon(s);
+            Tray.Log("Simge: gömülü app.ico bulunamadı");
+        }
+        catch (Exception ex) { Tray.Log("Simge yüklenemedi: " + ex.Message); }
+        return (Icon)SystemIcons.Application.Clone();
+    }
+}
+
 static class Program
 {
     [STAThread]
@@ -111,7 +127,7 @@ class Tray : ApplicationContext
         menu.Items.Add("Rexael Tools’u aç", null, (_, _) => ShowMain());
         menu.Items.Add(auto);
         menu.Items.Add("Çık", null, (_, _) => { _tray!.Visible = false; Application.Exit(); });
-        _tray = new NotifyIcon { Icon = SystemIcons.Application, Text = "Rexael Tools", ContextMenuStrip = menu, Visible = true };
+        _tray = new NotifyIcon { Icon = AppIcon.Get(true), Text = "Rexael Tools", ContextMenuStrip = menu, Visible = true };
         AutoClicker.Changed += () => _tray.Text = AutoClicker.Running ? "Rexael Tools • Tıklıyor" : "Rexael Tools";
 
         _tray.DoubleClick += (_, _) => ShowMain();
@@ -129,15 +145,14 @@ class Tray : ApplicationContext
         Trim();
 
         // Açılışta arka planda güncelleme denetimi: yeni sürüm varsa indirir, değiştirir, yeniden başlatır.
+        Updater.Args = args;
+        Updater.Notify = m => _tray.ShowBalloonTip(3000, "Rexael Tools", m, ToolTipIcon.Info);
+        Updater.ExitApp = () => { _tray.Visible = false; Application.Exit(); };
         Updater.CleanOld();
         _ = Task.Run(async () =>
         {
             await Task.Delay(3000); // açılışı yavaşlatmasın
-            if (await Updater.TryUpdateAsync(args, m => _tray.ShowBalloonTip(3000, "Rexael Tools", m, ToolTipIcon.Info)))
-            {
-                _tray.Visible = false;
-                Application.Exit();
-            }
+            if (!args.Contains("--updated")) await Updater.CheckAsync(false);
         });
     }
 
@@ -284,7 +299,7 @@ class Wheel : Form
     static readonly string[] L = { "PNG", "WEBP", "GIF", "PDF", "SVG", "JPG" };
     // MainForm ile aynı palet
     static readonly Color Gold = Color.FromArgb(111, 92, 255), Ice = Color.FromArgb(222, 217, 255),
-        Txt = Color.FromArgb(244, 243, 252), Sub = Color.FromArgb(170, 170, 188), Tag = Color.FromArgb(166, 154, 255);
+        Txt = Color.FromArgb(244, 243, 252), Sub = Color.FromArgb(170, 170, 188), TagC = Color.FromArgb(166, 154, 255);
 
     // ---------- Yazı tipleri (SF Pro > Segoe UI Variable > Segoe UI > UiFont) ----------
     static readonly HashSet<string> Installed = LoadFonts();
@@ -491,7 +506,7 @@ class Wheel : Form
 
         // HEDEF / format / dosya adı
         using var sf2 = UiFont.Format(StringAlignment.Center, StringAlignment.Center);
-        using (var b = new SolidBrush(Tag))
+        using (var b = new SolidBrush(TagC))
             g.DrawString(string.Join("\u2009", "HEDEF".ToCharArray()), fTag, b, new RectangleF(C - 40, C - 27, 80, 14), sf2);
         using (var b = new SolidBrush(_hot >= 0 ? Ice : Txt))
             g.DrawString(_hot >= 0 ? L[_hot] : "Seç", fBig, b, new RectangleF(C - 44, C - 15, 88, 28), sf2);

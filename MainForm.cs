@@ -104,7 +104,7 @@ class MainForm : Form
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Rexael Tools";
-        Icon = SystemIcons.Application;
+        Icon = AppIcon.Get(false);
         BackColor = Bg;
         DoubleBuffered = true;
         KeyPreview = true;
@@ -115,6 +115,7 @@ class MainForm : Form
         KeyDown += OnKey;
         AutoClicker.Changed += OnClickerChanged;
         BatchConvert.Changed += OnClickerChanged;
+        Updater.Changed += OnUpdaterChanged;
 
         foreach (var t in _tools)
         {
@@ -227,6 +228,7 @@ class MainForm : Form
         {
             AutoClicker.Changed -= OnClickerChanged;
             BatchConvert.Changed -= OnClickerChanged;
+            Updater.Changed -= OnUpdaterChanged;
             _logo?.Dispose();
             _anim.Dispose();
             fTitle.Dispose();
@@ -603,6 +605,13 @@ class MainForm : Form
     // (BatchConvert.Changed olayı da bu metodu kullanır: yalnızca yeniden çizdirir.)
     void OnClickerChanged() { if (!IsDisposed && IsHandleCreated) Invalidate(); }
 
+    // Güncelleyici arka plan iş parçacığından haber verir; çizimi arayüz iş parçacığında yenile.
+    void OnUpdaterChanged()
+    {
+        if (IsDisposed || !IsHandleCreated) return;
+        try { BeginInvoke(new Action(() => { if (!IsDisposed) { Kick(); Invalidate(); } })); } catch { }
+    }
+
     static int Step(int v) => v >= 1000 ? 100 : v >= 100 ? 10 : v >= 20 ? 5 : 1;
     static int DigitOf(Keys k) =>
         k >= Keys.D0 && k <= Keys.D9 ? k - Keys.D0 :
@@ -868,6 +877,32 @@ class MainForm : Form
         _a = 1f;
 
         _hits.Add((new Rectangle(card.Right - 84, card.Y + 8, 76, 66), ToggleAutostart));
+
+        // ---- Güncelleme kartı ----
+        float e1 = Ease((_enterMs - 70f) / 280f);
+        var upd = new Rectangle(176, card.Bottom + 12, 508, 82);
+        var st2 = g.Save();
+        g.TranslateTransform((1f - e1) * 26f, 0);
+        _a = e1;
+
+        Glass(g, upd, 14, null, 0f, 1f, true);
+        var uicon = new Rectangle(upd.X + 14, upd.Y + 17, 48, 48);
+        Glass(g, uicon, 13, Gold, 1.5f, 1.1f);
+        DrawText(g, "G", fIcon, Ice, uicon, StringAlignment.Center, StringAlignment.Center);
+
+        DrawText(g, "Güncellemeleri denetle", fBody, Txt, new Rectangle(upd.X + 76, upd.Y + 15, 300, 20));
+        string info = Updater.Status.Length > 0
+            ? $"Kurulu sürüm {Updater.Current} · {Updater.Status}"
+            : $"Kurulu sürüm {Updater.Current}. Ayrıntılar %TEMP%\\FormatCarki.log dosyasında.";
+        DrawText(g, info, fSmall, Sub, new Rectangle(upd.X + 76, upd.Y + 37, 320, 36));
+
+        var btn = new Rectangle(upd.Right - 106, upd.Y + 25, 92, 32);
+        Chip(g, btn, Updater.Busy ? "Bakılıyor…" : "Denetle", false);
+
+        g.Restore(st2);
+        _a = 1f;
+
+        _hits.Add((btn, () => { if (!Updater.Busy) _ = Updater.CheckAsync(true); }));
     }
 
     protected override void OnPaint(PaintEventArgs e)
