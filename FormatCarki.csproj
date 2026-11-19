@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Version>1.0.0</Version>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+		<ServerGarbageCollector>false</ServerGarbageCollector>
+		<TieredPGO>false</TieredPGO>
+		<UseSystemResourceKeys>true</UseSystemResourceKeys>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- Gömülü yazı tipi: Fonts klasörüne Inter-Regular.ttf ve Inter-SemiBold.ttf konur -->
+		<EmbeddedResource Include="Fonts\*.ttf" LogicalName="%(Filename)%(Extension)" />
+		<!-- Logo: Assets\logo.png (kare PNG, 160x160 önerilir). Dosya yoksa derleme hata vermez, "R" simgesi çizilir. -->
+		<EmbeddedResource Include="Assets\logo.png" LogicalName="logo.png" Condition="Exists('Assets\logo.png')" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp" Version="3.*" />
+	</ItemGroup>
+</Project>
