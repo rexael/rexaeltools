@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Sürümü oku
+        id: ver
+        shell: bash
+        run: |
+          v=$(grep -oP '(?<=<Version>)[^<]+' FormatCarki.csproj)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Bu sürüm daha önce yayınlanmış mı?
+        id: check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Derle
+        if: steps.check.outputs.exists == 'false'
+        run: >
+          dotnet publish FormatCarki.csproj -c Release -r win-x64
+          --self-contained false
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o out
+
+      - name: Release oluştur
+        if: steps.check.outputs.exists == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.ver.outputs.version }}" out/FormatCarki.exe \
+            --title "v${{ steps.ver.outputs.version }}" --generate-notes
